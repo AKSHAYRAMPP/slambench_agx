@@ -213,6 +213,149 @@ Complete list of the datasets available is provided by the command
 
 `make datasets`
 
+## How to run an existing algorithm with SLAMBench?
+
+Once you have compiled a benchmark, there are several ways to run it.
+For each implementation of this benchmark, you will find a specific library. 
+As an example, with KinectFusion, after running `make slambench APPS=kfusion`, you may find the following libraries in the `build/lib` directory :
+
+```bash
+> ls build/lib/libkfusion-*-library.so
+
+build/lib/libkfusion-cpp-library.so   
+build/lib/libkfusion-notoon-library.so      
+build/lib/libkfusion-openmp-library.so
+build/lib/libkfusion-cuda-library.so  
+build/lib/libkfusion-opencl-library.so
+```
+
+We can see five different implementations (cpp, notoon, and openmp, cuda and opencl). The list of available binaries depends of the dependencies you installed beforehand. For example, you need CUDA to compile the kfusion-cuda. A complete list of the dependencies is available at the end of this README.
+
+### Running a benchmark (e.g. KinectFusion)
+
+To run one algorithm you will need to use a **loader**. 
+There are three different loaders supported, **benchmark**, **pangolin**, and **lifelong**.
+The first two loaders are used the same way, except that **benchmark** is a command line application dedicated to measurements, while **pangolin** is a graphical user interface less precise in term of measurement but which provide a good interface for demonstrations. The **lifelong** loader can take multiple input (multiple .slam files following the -i option, separated by ',') which will be sent to the benchmark one by one. Other than that it is similar to the **benchmark** loader. There is currently no loader both supporting loading multiple input and having a graphical user interface.
+
+
+Each loader has a series of parameters to specify such as the dataset location, or the libraries to run. 
+The list of those parameters is available by using the "--help" parameters.
+
+```bash
+> ./build/bin/benchmark_loader --help 
+== SLAMBench Configuration ==
+Available parameters :
+-fl            --frame-limit           : last frame to compute (Default=0)
+-o             --log-file              : Output log file (Default=)
+-i             --input                 : Specify the input file or mode. (Default=)
+-load          --load-library          : Load a specific SLAM library. (Default=)
+-dse           --dse                   : Output solution space of parameters. (Default=false)
+-h             --help                  : Print the help. (Default=false)
+-nf            --negative-focal-length : negative focal length (Default=false)
+-realtime      --realtime-mode         : realtime frame loading mode (Default=false)
+-realtime-mult --realtime-multiplier   : realtime frame loading mode (Default=1)
+-fo            --file-output           : File to write slamfile containing outputs (Default=)
+```
+
+
+Then if you run the loader again, while providing a dataset file `-i dataset.slam`, you will see new parameters dedicated to the dataset: 
+
+
+```bash
+> ./build/bin/benchmark_loader -i datasets/ICL_NUIM/living_room_traj2_loop.slam --help
+== SLAMBench Configuration ==
+Available parameters :
+....
+-Camera-intrisics --Camera-intrisics       : (Default=nullptr  Current=0.751875,1,0.4992185,0.4989583)
+-Depth-intrisics  --Depth-intrisics        : (Default=nullptr  Current=0.751875,1,0.4992185,0.4989583)
+-Depth-dip        --Depth-disparity-params : (Default=nullptr  Current=0.001,0)
+-Camera-intrisics --Camera-intrisics       : (Default=nullptr  Current=0.751875,1,0.4992185,0.4989583)
+```
+
+Finally is you add a library name `-load libname`, more parameter can be seen: 
+
+```bash
+> ./build/bin/benchmark_loader -i datasets/ICL_NUIM/living_room_traj2_loop.slam -load ./build/lib/libkfusion-cpp-library.so  --help
+== SLAMBench Configuration ==
+Available parameters :
+
+....
+
+-c                --compute-size-ratio     : Compute ratio (Default=1)
+-r                --integration-rate       : integration-rate  (Default=2)
+-t                --tracking-rate          : tracking-rate     (Default=1)
+-z                --rendering-rate         : rendering-rate    (Default=4)
+-l                --icp-threshold          : icp-threshold     (Default=1e-05)
+-m                --mu                     : mu                (Default=0.1)
+-s                --volume-size            : volume-size       (Default=8,8,8)
+-d                --volume-direction       : volume-direction  (Default=4,4,4)
+-v                --volume-resolution      : volume-resolution (Default=256,256,256)
+-y1               --pyramid-level1         : pyramid-level1    (Default=10)
+-y2               --pyramid-level2         : pyramid-level2    (Default=5)
+-y3               --pyramid-level3         : pyramid-level3    (Default=4)
+```
+
+
+You can run a loader with **only one dataset** at a time and **it must be specified first**.
+
+In the next section we will explain how to use SLAMBench to evaluate the performance of a SLAM algorithm.
+
+### Evaluating a benchmark (eg. KinectFusion)
+
+SLAMBench works with Metrics and Outputs elements. 
+When you run the ```benchmark_loader``` or the ```pangolin_loader``` or the ```lifelong_loader``` these are those elements that you can visualize.
+Metrics are components generated by SLAMBench framework really, while Outputs are generated by the algorithm or may be elements post-processed by SLAMBench (such as the aligned trajectory with the ground truth).
+
+Let us run the benchmark loader. Its output is composed of two main parts, the `Properties` section, and the `Statistics` section. 
+the properties section details all the parameters used for the experiment (could been changed or not via the command line). 
+the statistics section report all the outputs and metrics selection for output in the benchmark loader.
+
+```bash
+> ./build/bin/benchmark_loader -i datasets/ICL_NUIM/living_room_traj2_loop.slam -load ./build/lib/libkfusion-cpp-library.so 
+
+SLAMBench Report run started:	2018-02-02 04:41:31
+
+Properties:
+=================
+
+frame-limit: 0
+log-file: 
+input: datasets/ICL_NUIM/living_room_traj2_loop.slam
+load-library: ./build/lib/libkfusion-cpp-library.so
+dse: false
+help: false
+negative-focal-length: false
+realtime-mode: false
+realtime-multiplier: 1
+file-output: 
+Camera-intrisics: 0.751875,1,0.4992185,0.4989583
+Depth-intrisics: 0.751875,1,0.4992185,0.4989583
+Depth-disparity-params: 0.001,0
+Camera-intrisics: 0.751875,1,0.4992185,0.4989583
+compute-size-ratio: 1
+integration-rate: 2
+tracking-rate: 1
+rendering-rate: 4
+icp-threshold: 1e-05
+mu: 0.1
+volume-size: 8,8,8
+volume-direction: 4,4,4
+volume-resolution: 256,256,256
+pyramid-level1: 10
+pyramid-level2: 5
+pyramid-level3: 4
+Statistics:
+=================
+
+Frame Number	Timestamp	Duration_Frame	GPU_Memory	CPU_Memory		Duration_Preprocessing	Duration_Tracking	Duration_Integration	Duration_Raycasting	Duration_Render	X	Y	ZATE_Frame
+1	0.0000000000	0.7679200000	0	623801799		0.1254800000	0.0195420000	0.0561620000	0.0000030000	0.5667170000	4.0000000000	4.0000000000	4.0000000000	0.0000002980
+2	1.0000000000	0.2003970000	0	623801799		0.1242030000	0.0156470000	0.0581670000	0.0000000000	0.0023710000	4.0000000000	4.0000000000	4.0000000000	0.0010031639
+3	2.0000000000	0.1989980000	0	623801799		0.1233680000	0.0152360000	0.0580180000	0.0000000000	0.0023690000	4.0000000000	4.0000000000	4.0000000000	0.0055015362
+4	3.0000000000	0.7518580000	0	623801799		0.1220660000	0.0152080000	0.0563070000	0.5559520000	0.0023170000	4.0000000000	4.0000000000	4.0000000000	0.0036504765
+5	4.0000000000	1.3683420000	0	623801799		0.1240890000	0.0767240000	0.0581630000	0.5504240000	0.5589330000	3.9957129955	4.0020360947	4.0009112358	0.0021276891
+...
+
+
 #### Algorithms
 SLAMBench currently supports the following algorithms:
 
