@@ -116,3 +116,4 @@ run_violins "build/lib/libinfinitam-cpp-library.so" ""
 run_violins "build/lib/libkfusion-cuda-library.so" ""
 run_violins "build/lib/libefusion-cuda-library.so" "--textureDim 512 --nodeTextureDim 2048"
 run_violins "build/lib/libinfinitam-cuda-library.so" ""
+
