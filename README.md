@@ -12,7 +12,7 @@ SLAMBench is a SLAM performance benchmark that combines a framework for quantify
 
 SLAMBench offers a platform for a broad spectrum of future research in jointly exploring the design space of algorithmic and implementation-level optimisations. It targets desktop, laptop, mobile and embedded platforms. Some of the benchmarks (in particular KFusion) were tested on Ubuntu, OS X and Android (more information about android here [https://github.com/bbodin/slambench-android](https://github.com/bbodin/slambench-android)).
 
-### Hardware Specification for Nvidia Jetson AGX used here:
+### Hardware Specification of Nvidia Jetson Xavier AGX used here:
 
 GPU:	512-core Volta GPU with Tensor Cores
 
