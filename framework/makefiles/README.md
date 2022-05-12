@@ -1,5 +1,7 @@
 # SLAMBench Dependency System #
 
+Brisk is not needed for ORBSLAM2 and ORBSLAM3 , so it is commented out on deps.makefile 
+
 ## Description ##
 
 The idea is to maximise the chance of a good build, by selection the best cocktail of libraries.
