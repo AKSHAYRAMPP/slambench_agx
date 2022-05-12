@@ -114,6 +114,7 @@ To run the CUDA implementation of some of the algorithms, you will need extra de
 
 `sudo apt-get -y install nvidia-cuda-toolkit clinfo`
 
+#### Installation on Jetson AGX
 
 `git clone https://github.com/pamela-project/slambench `
 
@@ -200,7 +201,19 @@ in appropriate area. }
 
 `make slambench APPS=orbslam3,orbslam2`//compiling specific use-cases
 
+#### Downloading Dataset
+To test a SLAM algorithm you can use a Live camera, or a dataset. 
+SLAMBench provides tools to automatically download some of the most popular datasets. The file format (*.slam) will then include all the most important information about the dataset, those are **Camera calibration setting**, **initial position of the sensors**, and the **ground truth**.
 
+As an example to download and generate EuRoC MAV dataset(Machine Hall 1), you can run the following :
+
+`make datasets/EuRoCMAV/machine_hall/MH_01_easy/MH_01_easy.slam`
+
+Complete list of the datasets available is provided by the command 
+
+`make datasets`
+
+#### Algorithms
 SLAMBench currently supports the following algorithms:
 
 * ORB-SLAM3 [Campos et al, ARXIV'20]: C++ as distributed by https://github.com/UZ-SLAMLab
@@ -220,30 +233,18 @@ SLAMBench currently supports the following algorithms:
 * PTAM [Klein et al, ISMAR'07 and ECCV'08]: Original version as distributed by https://github.com/Oxford-PTAM/
 * SVO [Forster et al, ICRA'14]: Original version as distributed by https://github.com/uzh-rpg/rpg_svo/ (a more recent version available at http://rpg.ifi.uzh.ch/svo2.html)
 
-### Dependency installation
+#### Dataset
 
-#### Required by SLAMBench framework
-* CMake 2.8.11 or higher is required.
-* Make
-* GCC C/C++
-* Boost (Optional)
-* GLUT (Optional)
+SLAMBench currently supports the following datasets:
 
-#### Required by benchmarks and datasets
-* Git
-* Mercurial
-* wget
-* unzip
-* lapack
-* blas
-* findutils
-* cvs
-* glog
-* gflags
-* p7zip
-
-
-
+* OpenLORIS [Shi et al, ICRA'20]: Lifelong SLAM dataset
+* Bonn Dynamic [Palazollo et al. IROS'19]: Dynamic scene dataset
+* UZH-FPV [Delmerico et al. ICRA'19]: Drone racing dataset
+* ETH Illumination [Park et al, ICRA'17]: Illumination changes dataset
+* VolumeDeform [Innmann et al, ECCV'16]: Non-rigid reconstruction
+* EuRoC MAV [Burri et al, IJRR'16]: Micro Aerial Vehicle dataset
+* ICL-NUIM [Handa et al, ICRA'14]: Synthetic dataset
+* TUM RGB-D [Sturm et al, IROS'12]: A standard SLAM benchmark
 
 *This repositary contains updated SLAMBench by solving all the below errors.
 
