@@ -1,0 +1,15 @@
+cmake_minimum_required(VERSION 2.8)
+
+add_executable(slambench slambench_app.cpp)
+target_include_directories(slambench PUBLIC ${SLAMBENCH_INCLUDE_DIR} ${PROJECT_SOURCE_DIR}/shared/include)
+target_link_libraries(slambench PRIVATE pthread ${SLAMBENCH_LIBRARIES})
+
+find_package(Pangolin QUIET)
+find_package(TOON QUIET)
+IF(Pangolin_FOUND)
+	set(gui_pangolin_libraries slambench-ui-pangolin ${Pangolin_LIBRARIES} ${OPENGL_LIBRARIES} pthread)
+	TARGET_INCLUDE_DIRECTORIES(slambench PUBLIC ${Pangolin_INCLUDE_DIR})
+	TARGET_INCLUDE_DIRECTORIES(slambench PUBLIC ${TOON_INCLUDE_PATHS})
+	target_link_libraries(slambench PRIVATE ${gui_pangolin_libraries})
+	add_definitions(-DWITH_GUI=1)
+ENDIF(Pangolin_FOUND)
