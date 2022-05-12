@@ -246,124 +246,111 @@ SLAMBench currently supports the following datasets:
 * ICL-NUIM [Handa et al, ICRA'14]: Synthetic dataset
 * TUM RGB-D [Sturm et al, IROS'12]: A standard SLAM benchmark
 
-*This repositary contains updated SLAMBench by solving all the below errors.
 
-# Errors 
- These are the errors obtained while building the original repo of slambench: [https://github.com/pamela-project/slambench](https://github.com/pamela-project/slambench)
+## How to add a new benchmark in SLAMBench?
 
+The main reason to provide a new version of SLAMBench is not only because of the introduction of new benchmarks but also because we provide now 
+a clear and specific API for SLAM algorithms to be implemented in order to add a new algorithm.
 
-1. unrcognized coand -mfpu=neon
+```
+bool sb_new_slam_configuration(SLAMBenchLibraryHelper * slam_settings);
+bool sb_init_slam_system(SLAMBenchLibraryHelper * slam_settings);
+bool sb_update_frame(SLAMBenchLibraryHelper * slam_settings, slambench::io::SLAMFrame * type);
+bool sb_process_once(SLAMBenchLibraryHelper * slam_settings);
+bool sb_relocalize(SLAMBenchLibraryHelper * slam_settings);
+bool sb_update_outputs(SLAMBenchLibraryHelper *lib, const slambench::TimeStamp *latest_output);
+bool sb_clean_slam_system();
+bool sb_update_outputs(SLAMBenchUI *);
+```
 
-sol: remove brisk from CmakeLists.txt file. Brisk is a dependency for OKVIS, here we are not using OKVIS
+**If each of those functions are correctly implemented for a specific implementation of a specific algorithm, then this algorithm is compatible with SLAMBench and can be evaluated as well.**
 
+In this section we will present those functions one by one.
 
-2. cannot find -lgfortran
+### bool sb\_new\_slam\_configuration(SLAMBenchLibraryHelper * slam\_settings)
 
-sol: make gcc,g++,gfortan same version
+This function is called first, and only once, SLAM systems is expected to provide its parameters.
 
-first check the versions:
+Example :
 
-`gcc --version`
+```cpp
+bool sb_new_slam_configuration(SLAMBenchLibraryHelper * slam_settings)  {
+	slam_settings->addParameter(TypedParameter<float>("c", "confidence",    "Confidence",   &confidence,    &default_confidence));
+	slam_settings->addParameter(TypedParameter<float>("d", "depth",         "Depth",        &depth,         &default_depth));
+	slam_settings->addParameter(TypedParameter<int>  ("td", "textureDim",   "textureDim",   &textureDim,    &default_textureDim));
+	return true;
+}
+```
 
-`g++ --version`
-
-`gfortran --version`
-
-If versions are different, then install:
-
-`sudo apt-get update`
-
-`apt-get install gcc-8 g++-8 gfortran-8`
-
-`sudo update-alternatives --install /usr/bin/gfortran gfortran /usr/bin/gfortran-8 70`
-
-
-3. checking build system type... ./config.guess: unable to guess system type
-
-sol: update automake version to 1.16
-
-remove the older version by:
-
-`sudo apt-get autoremove automake`
-
-update by:
-
-`wget [http://ftp.gnu.org/gnu/automake/automake-1.16.tar.gz](http://ftp.gnu.org/gnu/automake/automake-1.16.tar.gz)`
-
-`tar xvzf automake-1.16.tar.gz`
-
-`cd automake-1.16`
-
-`./configure`
-
-`make -j3`
-
-`sudo make install`
-
-`sudo gedit /slambench/deps/repos/cvd/config.guess`
-
-clear and paste content of
-
- [http://cvs.savannah.gnu.org/viewvc/*checkout*/config/config/config.guess](http://cvs.savannah.gnu.org/viewvc/*checkout*/config/config/config.guess)
-
-`sudo gedit /slambench/deps/repos/cvd/config.sub`
-
-clear and paste content of 
-
-[http://cvs.savannah.gnu.org/viewvc/*checkout*/config/config/config.sub](http://cvs.savannah.gnu.org/viewvc/*checkout*/config/config/config.sub)
+should always return `true` or an exception will be raised.
 
 
-4. cd /home/nvidia/slambench/deps/repos ; git clone git://github.com/mariusmuja/flann.git flann
-Cloning into 'flann'...
-fatal: remote error:
-The unauthenticated git protocol on port 9418 is no longer supported.
-Please see [https://github.blog/2021-09-01-improving-git-protocol-security-github/](https://github.blog/2021-09-01-improving-git-protocol-security-github/) for more information.
-framework/makefiles/flann.make:6: recipe for target '/home/nvidia/slambench/deps/repos/flann' failed
+### bool sb\_init\_slam\_system(SLAMBenchLibraryHelper * slam\_settings)
 
-sol: inside /home/nvidia/slambench/framework/makefiles/flann.make
-
-change git clone repo to [https://github.com/flann-lib/flann.git](https://github.com/flann-lib/flann.git)
+This function is called second, and only once, SLAM systems is expected to allocate memory, retrieve sensor informations.
 
 
-5. checking build system type... ./config.guess: unable to guess system type
+To retrieve sensor there is `SensorFinder`:
+```cpp
+slambench::io::CameraSensorFinder sensor_finder;
+auto rgb_sensor = sensor_finder.FindOne(slam_settings->get_sensors(), {{"camera_type", "rgb"}});
+```
 
-sol: 
+SLAM systems are also expected to define there output, there is one mandatory output, the pose:
 
-`sudo gedit /slambench/deps/repos/gvars/config.guess `
+```cpp
+pose_output = new slambench::outputs::Output("Pose", slambench::values::VT_POSE, true);
+slam_settings->GetOutputManager().RegisterOutput(pose_output);
+```
+should always return `true` or an exception will be raised.
 
-clear and paste content of
+### bool sb_update_frame (SLAMBenchLibraryHelper *slam_settings, slambench::io::SLAMFrame *frame)
 
- [https://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.guess](https://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.guess)
+Algorithms receive frames ordered by timestamp.
+When `sb_update_frame` returns `false`, `sb_update_frame` will be directly called again with the next frame, if it returns `true`, `sb_process_once` will be called once.
 
+### bool sb_process_once (SLAMBenchLibraryHelper *slam_settings)
 
-6. note: ...this statement, but the latter is misleadingly indented as if it were guarded by the ‘if’ if (* x) delete (* reinterpret_cast<T**>(x)); *x = NULL;
+Should always return `true` or an exception will be raised.
 
-sol: Go to the file 
+### bool sb_relocalize (SLAMBenchLibraryHelper *slam_settings)
 
-`gedit /home/nvidia/slambench/deps/repos/flann/src/cpp/flann/util/any.h`
+This is newly introduced to support lifelong SLAM evaluation. It will be called when the input sequence has been switched to the next one. The implementation is expected to explicitly trigger tracking lost and invoke the algorithm's re-localization procedure (if there be). It should return whether the relocalization is sucessful from the algorithm's perspective.
 
-and change line no:81 to
+For backward compatibility, this function is allowed to be unimplemented in a benchmark. In such cases, the ```sb_process_once``` function will be called in a re-localization situation.
 
- if (* x){ delete (* reinterpret_cast<T**>(x));} *x = NULL;
+### bool sb_clean_slam_system()
 
- 
- 7. SLAMBench dataset build error  
+This function is called last, and only once, SLAM systems is expected to clean everything (free memory).
 
-[#######################################           ] 61258 / 80566Could not write frame data 
+```cpp
+bool sb_clean_slam_system() {
+	delete eFusion;
+	delete inputRGB;
+	delete inputDepth;
+	return true;
+}
+```
 
-Failed to serialise frame 
+should always return `true` or an exception will be raised.
 
-Done. 
+### bool sb_update_outputs(SLAMBenchLibraryHelper *slam_settings, const slambench::TimeStamp *timestamp) 
 
-dataset-generator: /home/nvidia/slambench/framework/tools/dataset-tools/dataset-generator.cpp:197: int main(int, char**): Assertion `res' failed. 
+The algorithm will return visible outputs (Pose, Point cloud, Frames) as defined by the `sb_init_slam_system` function.
 
-framework/makefiles/dataset-utils.makefile:51: recipe for target 'datasets/EuRoCMAV/machine_hall/MH_01_easy/MH_01_easy.slam' failed 
+Example :
 
-make: *** [datasets/EuRoCMAV/machine_hall/MH_01_easy/MH_01_easy.slam] Aborted (core dumped) 
+```cpp
+bool sb_update_outputs(SLAMBenchLibraryHelper *lib, const slambench::TimeStamp *ts_p) {
+slambench::TimeStamp ts = *ts_p;
 
-make: *** Deleting file 'datasets/EuRoCMAV/machine_hall/MH_01_easy/MH_01_easy.slam' 
+if(pose_output->IsActive()) {
+	// Get the current pose as an eigen matrix
+	Eigen::Matrix4f mat = eFusion->getCurrPose();
 
-Sol: This is due to lack of storage space in Jetson try adding SDCard or SSD externally
+	std::lock_guard<FastLock> lock (lib->GetOutputManager().GetLock());
+	pose_output->AddPoint(ts, new slambench::values::PoseValue(mat));
+}
+```
 
-  
-# slambench_agx
+should always return `true` or an exception will be raised.
