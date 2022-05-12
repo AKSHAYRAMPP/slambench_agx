@@ -1,7 +1,18 @@
 # SLAMBench_jetson xavier agx
 SLAMBench(updated repo) is used here for benchmarking ORBSLAM2, ORBSLAM3 on NVIDIA Jetson Xavier agx
 
-Hardware Specification:
+Original repo: https://github.com/pamela-project/slambench.git
+
+Paper: [Robust SLAM Systems: Are We There Yet?](https://arxiv.org/abs/2109.13160) \
+https://robustslam.github.io/evaluation
+
+## What is SLAMBench? ##
+
+SLAMBench is a SLAM performance benchmark that combines a framework for quantifying quality-of-result with instrumentation of accuracy, execution time, memory usage and energy consumption. It also include a graphical interface to visualize these information.
+
+SLAMBench offers a platform for a broad spectrum of future research in jointly exploring the design space of algorithmic and implementation-level optimisations. It targets desktop, laptop, mobile and embedded platforms. Some of the benchmarks (in particular KFusion) were tested on Ubuntu, OS X and Android (more information about android here [https://github.com/bbodin/slambench-android](https://github.com/bbodin/slambench-android)).
+
+### Hardware Specification for Nvidia Jetson AGX used here:
 
 GPU:	512-core Volta GPU with Tensor Cores
 
@@ -13,9 +24,82 @@ Storage:	32GB eMMC 5.1
 
 OS: UBUNTU 18.04
 
+
+
+**IMPORTANT: If you use any of those algorithms in scientific publications, you should refer to the respective publications.**
+
+In addition, if you use SLAMBench in scientific publications, we would appreciate citations to the following papers:
+```
+
+@inproceedings{bujanca2021robust,  
+  author={Bujanca, Mihai and Shi, Xuesong and Spear, Matthew and Zhao, Pengpeng and Lennox, Barry and Luj{\'a}n, Mikel},
+  booktitle={2021 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS)},
+  title={Robust SLAM Systems: Are We There Yet?},
+  year={2021},
+  doi={10.1109/IROS51168.2021.9636814}
+}
+
+@inproceedings{bujanca2019slambench,
+  title={SLAMBench 3.0: Systematic automated reproducible evaluation of SLAM systems for robot vision challenges and scene understanding},
+  author={Bujanca, Mihai and Gafton, Paul and Saeedi, Sajad and Nisbet, Andy and Bodin, Bruno and O'Boyle, Michael FP and Davison, {Andrew J} and Kelly, {Paul H.J.} and Riley, Graham and Lennox, Barry and Luj{\'a}n, Mikel and Furber, Steven},
+  booktitle={2019 International Conference on Robotics and Automation (ICRA)},
+  pages={6351--6358},
+  year={2019},
+  organization={IEEE}
+}
+
+@inproceedings{Bodin2018,
+author    = "Bruno Bodin and Harry Wagstaff and Sajad Saeedi and Luigi Nardi and Emanuele Vespa and Mayer, {John H} and Andy Nisbet and Mikel Luj{\'a}n and Steve Furber and Davison, {Andrew J} and Kelly, {Paul H.J.} and Michael O'Boyle",
+title     = "SLAMBench2: Multi-Objective Head-to-Head Benchmarking for Visual SLAM",
+booktitle = "{IEEE Intl. Conf. on Robotics and Automation (ICRA)}",
+year = {2018},
+month = {May}
+}
+
+@inproceedings{Nardi2015,
+  title={Introducing SLAMBench, a performance and accuracy benchmarking methodology for SLAM},
+  author={Nardi, Luigi and Bodin, Bruno and Zia, M Zeeshan and Mawer, John and Nisbet, Andy and Kelly, Paul HJ and Davison, Andrew J and Luj{\'a}n, Mikel and O'Boyle, Michael FP and Riley, Graham and others},
+  booktitle={2015 IEEE international conference on robotics and automation (ICRA)},
+  pages={5783--5790},
+  year={2015},
+  organization={IEEE}
+}
+```
+
+### Available list of algorithms
+
+Use the following command to list all available algorithms:
+
+```
+make usecases
+```
+
 # Steps for building SLAMBench on Jetson Xavier AGX
 
-Install library Dependencies
+ALGORITHMS BENCHMARKED: ORBSLAM2, ORBSLAM3
+### Dependency installation
+
+#### Required by SLAMBench framework
+* CMake 2.8.11 or higher is required.
+* Make
+* GCC C/C++
+* Boost (Optional)
+* GLUT (Optional)
+
+#### Required by benchmarks and datasets
+* Git
+* Mercurial
+* wget
+* unzip
+* lapack
+* blas
+* findutils
+* cvs
+* glog
+* gflags
+* p7zip
+
+Installation of library Dependencies
 
 `sudo apt-get -y install libvtk6.3 libvtk6-dev unzip libflann-dev wget
 mercurial git gcc g++ cmake python-numpy freeglut3 freeglut3-dev
@@ -24,13 +108,20 @@ libgl1-mesa-dev libxmu-dev libxi-dev libboost-all-dev cvs
 libgoogle-glog-dev libatlas-base-dev gfortran gtk2.0 libgtk2.0-dev
 libyaml-dev build-essential libyaml-cpp-dev`
 
+#### Special requirements for CUDA
+
+To run the CUDA implementation of some of the algorithms, you will need extra dependencies.
+
+`sudo apt-get -y install nvidia-cuda-toolkit clinfo`
+
+
 `git clone https://github.com/pamela-project/slambench `
 
 `cd slambench`
 
-`make deps`
+`make deps` //installing dependencies (Details on dependencies is found inside slambench/framework/makefiles/README.md file)
 
-`make slambench`
+`make slambench`   //slambench framework compilation
 
 This step is only required for original repo: 
 
@@ -63,7 +154,7 @@ git clone https://github.com/mihaibujanca/ORB_SLAM3 benchmarks/orbslam3/src/orig
 
 in appropriate area. }
 
-`make orbslam3 orbslam2`
+`make orbslam3 orbslam2`  //download use-cases
 
 `cd slambench/benchmarks/orbslam3/src/original/Thirdparty/DBoW2`
 
@@ -107,7 +198,51 @@ in appropriate area. }
 
 `cd slambench`
 
-`make slambench APPS=orbslam3 orbslam2`
+`make slambench APPS=orbslam3,orbslam2`//compiling specific use-cases
+
+
+SLAMBench currently supports the following algorithms:
+
+* ORB-SLAM3 [Campos et al, ARXIV'20]: C++ as distributed by https://github.com/UZ-SLAMLab
+* ReFusion [Palazollo et al. IROS'19]: CUDA as distributed by https://github.com/PRBonn
+* OpenVINS [Geneva et al. IROS'19]: C++ as distributed by https://github.com/rpng/
+* Supereight [Vespa et al. RA-L'18]: C++, OpenMP as distributed by https://github.com/emanuelev
+* BundleFusion [Dai et al. ACM TOG'17]: CUDA as distributed by https://github.com/niessner
+* SemanticFusion [McCormac et al. ICRA'17]: CUDA as distributed by https://github.com/seaun163
+* ORB-SLAM2 [Mur-Artal et al, TOR'15 and TOR'17]: C++ as distributed by https://github.com/raulmur
+* DSO [Engel et al. Arxiv'16]: C++ as distributed by https://github.com/JakobEngel
+* ElasticFusion [Whelan et al, IJRR'16]: CUDA as distributed by https://github.com/mp3guy
+* InfiniTAMv2 [Kahler et al, ISMAR'15]: C++, OpenMP and CUDA versions as distributed by https://github.com/victorprad/
+* KinectFusion [Newcombe et al. ISMAR'11]: C++, OpenMP, OpenCL and CUDA inspired by https://github.com/GerhardR
+* LSDSLAM [Engel et al, ECCV'14]: C++, and threaded as distributed by https://github.com/tum-vision/ and modified by https://github.com/mp3guy
+* MonoSLAM [Davison et al, TPAMI'07]: Original version as distributed by https://github.com/hanmekim/
+* OKVIS [Leutenegger et al, IJRR'15]: Original version as distributed by https://github.com/ethz-asl
+* PTAM [Klein et al, ISMAR'07 and ECCV'08]: Original version as distributed by https://github.com/Oxford-PTAM/
+* SVO [Forster et al, ICRA'14]: Original version as distributed by https://github.com/uzh-rpg/rpg_svo/ (a more recent version available at http://rpg.ifi.uzh.ch/svo2.html)
+
+### Dependency installation
+
+#### Required by SLAMBench framework
+* CMake 2.8.11 or higher is required.
+* Make
+* GCC C/C++
+* Boost (Optional)
+* GLUT (Optional)
+
+#### Required by benchmarks and datasets
+* Git
+* Mercurial
+* wget
+* unzip
+* lapack
+* blas
+* findutils
+* cvs
+* glog
+* gflags
+* p7zip
+
+
 
 
 *This repositary contains updated SLAMBench by solving all the below errors.
